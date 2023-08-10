@@ -14,7 +14,7 @@ services:
       - USERS=${USERS}
       - TEST_NAME=${TEST_NAME}
       - VERSION=${VERSION}
-    command:  -f "/mnt/locust/locustfiles/${LOCUSTFILE}" --master -H http://master:8089 --host "https://${TARGET_ADDRESS}" --users "${USERS}" --spawn-rate 50 --run-time 1m --csv /mnt/locust/result/${TEST_NAME}_${VERSION}/${USERS}  --autostart --autoquit 3 --reset-stats --csv-full-history=
+    command:  -f "${LOCUSTFILE}" --master -H http://master:8089 --host "http://${TARGET_ADDRESS}" --users "${USERS}" --spawn-rate 50 --run-time 1m --csv /mnt/locust/result/${TEST_NAME}_${VERSION}/${USERS}  --autostart --autoquit 3 --reset-stats --csv-full-history
 
   worker:
     image: locustio/locust:2.15.1
@@ -23,8 +23,8 @@ services:
       - ./:/mnt/locust
     environment:
       - LOCUSTFILE=${LOCUSTFILE}
-      - ADDRESS=${ADDRESS}
+      - TARGET_ADDRESS=${TARGET_ADDRESS}
       - USERS=${USERS}
       - TEST_NAME=${TEST_NAME}
       - VERSION=${VERSION}
-    command: -f "/mnt/locust/locustfiles/${LOCUSTFILE}" --worker --master-host master
+    command: -f "${LOCUSTFILE}" --worker --master-host master

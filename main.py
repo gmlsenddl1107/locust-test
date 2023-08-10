@@ -3,31 +3,32 @@ import argparse
 import os
 import copy
 import pandas as pd
-
+import subprocess
 
 def merge_result(result_path):
     final = []
     col = None
     is_make_column = False
-    for file_path in os.listdir(result_path):
+    for file in os.listdir(result_path):
 
-        if "_stats.py" in os.path.basename(file_path):
+        if "_stats.csv" in os.path.basename(file):
             try:
-                data = pd.read_csv(file_path)
+                data = pd.read_csv(result_path+"/"+file)
                 if not is_make_column:
                     col = list(data.columns[1:])
                     col[0] = "vuser"
                     is_make_column = True
-
-                final.append(copy.deepcopy(data[-1][1:]))
+                dt =copy.deepcopy(data.values[-1][1:])
+                dt[0] =file.split("_")[0]
+                final.append(dt)
             except Exception as e:
                 print(e)
             else:
                 is_make_column = True
-
+    final =sorted(final,key=lambda x:x[0])
     final_result = pd.DataFrame(final, columns=col)
     save_filename = "final_result_" + os.path.basename(result_path) + ".csv"
-    final_result.to_csv(result_path / save_filename)
+    final_result.to_csv(result_path+ "/"+ save_filename)
 
 
 def create_folder_if_not_exists(folder_path):
@@ -49,20 +50,21 @@ def make_env_file(locustfile_full_path, target_address, users, test_name, versio
 
 
 def run_docker_compose():
-    import subprocess
+    print("--------start---------")
     cmd = ['docker-compose', 'up', '--scale', 'worker=4', '--force-recreate']
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     for line in p.stdout:
         print(line)
     p.wait()
     print(p.returncode)
-    print("--------end---------")
-    cmd = ['docker-compose', 'donw']
+
+    cmd = ['docker-compose', 'down']
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     for line in p.stdout:
         print(line)
     p.wait()
     print(p.returncode)
+    print("--------end---------")
 
 
 if __name__ == "__main__":
@@ -75,7 +77,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     test_name = args.locustfile_name_in_locustfiles.replace(".py", "")
-    result_folder_path = f"/mnt/locust/result_{test_name}_{args.version}"
+    result_folder_path = f"./result/{test_name}_{args.version}"
     locustfile_full_path = f"/mnt/locust/locustfiles/{args.locustfile_name_in_locustfiles}"
     create_folder_if_not_exists(result_folder_path)
     if args.use_warm_up:
