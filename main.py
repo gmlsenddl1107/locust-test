@@ -1,6 +1,35 @@
 import argparse
-import string
+
 import os
+import copy
+import pandas as pd
+def merge_result(result_path):
+    final =[]
+    col=None
+    is_make_column=False
+    for file_path in os.listdir(result_path):
+
+        if "_stats.py" in os.path.basename(file_path):
+            try:
+                data= pd.read_csv(file_path)
+                if not is_make_column:
+                    col= list(data.columns[1:])
+                    col[0]="vuser"
+                    is_make_column=True
+
+                final.append( copy.deepcopy(data[-1][1:]))
+            except Exception as e:
+                print(e)
+            else:
+                is_make_column = True
+
+
+
+    final_result = pd.DataFrame(final,columns=col)
+    save_filename ="final_result_"+os.path.basename(result_path)+".csv"
+    final_result.to_csv(result_path/save_filename)
+
+
 
 def create_folder_if_not_exists(folder_path):
     if os.path.exists(folder_path):
@@ -52,5 +81,5 @@ if __name__ == "__main__":
     for users in [1,32,64,128,256,512]:
         make_env_file(locustfile_full_path,args.target_address,users,test_name,args.version)
         run_docker_compose()
-
+    merge_result(result_folder_path)
 
